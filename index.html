@@ -384,6 +384,32 @@
             box-shadow: 0 4px 20px rgba(46, 213, 115, 0.3);
         }
 
+        .sync-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 1000;
+        }
+
+        .sync-status.syncing {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .sync-status.synced {
+            background: #28a745;
+            color: white;
+        }
+
+        .sync-status.error {
+            background: #dc3545;
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .expense-grid {
                 grid-template-columns: 1fr;
@@ -425,10 +451,19 @@
                 flex-direction: column;
                 gap: 5px;
             }
+
+            .sync-status {
+                top: 10px;
+                right: 10px;
+                font-size: 10px;
+                padding: 6px 8px;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="sync-status" id="syncStatus" style="display: none;">Synkroniserar...</div>
+    
     <div class="container">
         <div class="header">
             <h1>💰 Balansräkning</h1>
@@ -589,29 +624,124 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVS63u7KNOPweEwUgIFBRv8iREIA6p068",
+            authDomain: "balansrakning-35d46.firebaseapp.com",
+            projectId: "balansrakning-35d46",
+            storageBucket: "balansrakning-35d46.firebasestorage.app",
+            messagingSenderId: "517144001949",
+            appId: "1:517144001949:web:c914d88eadc770403c4374"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // Make Firebase available globally
+        window.firebaseDb = db;
+
+        console.log('Firebase initialized successfully');
+        
+        // Initialize the app after Firebase is loaded
+        window.initializeApp();
+    </script>
+
     <script>
-        // Global variables
+        // Global variables - unchanged
         let expenses = {};
         let currentDate = new Date();
         let exchangeRate = 11.50;
+        let isOnline = true;
+        let syncStatus = document.getElementById('syncStatus');
         
         const months = [
             'Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni',
             'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'
         ];
 
-        // Initialize
-        window.onload = function() {
-            loadData();
-            updateDisplay();
-            updateExchangeRateDisplay();
-        };
-
-        function getCurrentMonthKey() {
-            return `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+        // Firebase functions - NEW
+        async function syncToFirebase() {
+            if (!window.firebaseDb || !isOnline) return;
+            
+            try {
+                showSyncStatus('syncing');
+                
+                // Save expenses data
+                const expensesRef = window.firebaseDoc(window.firebaseDb, 'balanceData', 'expenses');
+                await window.firebaseSetDoc(expensesRef, { data: expenses }, { merge: true });
+                
+                // Save exchange rate
+                const rateRef = window.firebaseDoc(window.firebaseDb, 'balanceData', 'settings');
+                await window.firebaseSetDoc(rateRef, { exchangeRate: exchangeRate }, { merge: true });
+                
+                showSyncStatus('synced');
+                
+            } catch (error) {
+                console.error('Firebase sync error:', error);
+                showSyncStatus('error');
+            }
         }
 
-        function loadData() {
+        async function loadFromFirebase() {
+            if (!window.firebaseDb) return;
+            
+            try {
+                // Load expenses
+                const expensesRef = window.firebaseDoc(window.firebaseDb, 'balanceData', 'expenses');
+                const expensesDoc = await window.firebaseGetDoc(expensesRef);
+                if (expensesDoc.exists()) {
+                    const firebaseData = expensesDoc.data().data;
+                    if (firebaseData) {
+                        expenses = firebaseData;
+                    }
+                }
+                
+                // Load exchange rate
+                const settingsRef = window.firebaseDoc(window.firebaseDb, 'balanceData', 'settings');
+                const settingsDoc = await window.firebaseGetDoc(settingsRef);
+                if (settingsDoc.exists()) {
+                    const rate = settingsDoc.data().exchangeRate;
+                    if (rate) {
+                        exchangeRate = rate;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Firebase load error:', error);
+                // Fall back to localStorage if Firebase fails
+                loadFromLocalStorage();
+            }
+        }
+
+        function showSyncStatus(status) {
+            const statusEl = document.getElementById('syncStatus');
+            statusEl.style.display = 'block';
+            statusEl.className = `sync-status ${status}`;
+            
+            switch(status) {
+                case 'syncing':
+                    statusEl.textContent = '⏳ Synkroniserar...';
+                    break;
+                case 'synced':
+                    statusEl.textContent = '✅ Synkroniserat';
+                    setTimeout(() => statusEl.style.display = 'none', 2000);
+                    break;
+                case 'error':
+                    statusEl.textContent = '❌ Synk-fel';
+                    setTimeout(() => statusEl.style.display = 'none', 3000);
+                    break;
+            }
+        }
+
+        // Fallback localStorage functions - UNCHANGED
+        function loadFromLocalStorage() {
             try {
                 const savedData = localStorage.getItem('balanceCalculatorData');
                 if (savedData) {
@@ -625,6 +755,26 @@
             } catch (error) {
                 expenses = {};
             }
+        }
+
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('balanceCalculatorData', JSON.stringify(expenses));
+                localStorage.setItem('exchangeRate', exchangeRate.toString());
+            } catch (error) {
+                console.error('Error saving to localStorage:', error);
+            }
+        }
+
+        // Modified data functions
+        async function loadData() {
+            // First load from localStorage (instant)
+            loadFromLocalStorage();
+            
+            // Then try to load from Firebase (may take time)
+            if (window.firebaseDb) {
+                await loadFromFirebase();
+            }
             
             const monthKey = getCurrentMonthKey();
             if (!expenses[monthKey]) {
@@ -632,13 +782,26 @@
             }
         }
 
-        function saveData() {
-            try {
-                localStorage.setItem('balanceCalculatorData', JSON.stringify(expenses));
-                localStorage.setItem('exchangeRate', exchangeRate.toString());
-            } catch (error) {
-                console.error('Error saving data:', error);
+        async function saveData() {
+            // Always save to localStorage first (instant)
+            saveToLocalStorage();
+            
+            // Then sync to Firebase (may take time)
+            if (window.firebaseDb && isOnline) {
+                await syncToFirebase();
             }
+        }
+
+        // Initialize function - MODIFIED
+        window.initializeApp = async function() {
+            await loadData();
+            updateDisplay();
+            updateExchangeRateDisplay();
+        };
+
+        // All other functions remain UNCHANGED
+        function getCurrentMonthKey() {
+            return `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
         }
 
         function updateDisplay() {
@@ -659,9 +822,9 @@
             document.getElementById('currentMonth').textContent = `${monthName} ${year}`;
         }
 
-        function changeMonth(direction) {
+        async function changeMonth(direction) {
             currentDate.setMonth(currentDate.getMonth() + direction);
-            loadData();
+            await loadData();
             updateDisplay();
         }
 
@@ -683,11 +846,11 @@
             document.getElementById('expenseType').value = '';
         }
 
-        function updateRate() {
+        async function updateRate() {
             const newRate = parseFloat(document.getElementById('manualRate').value);
             if (newRate && newRate > 0) {
                 exchangeRate = newRate;
-                saveData();
+                await saveData();
                 updateDisplay();
                 document.getElementById('manualRate').value = '';
             } else {
@@ -695,7 +858,7 @@
             }
         }
 
-        function addExpense() {
+        async function addExpense() {
             const name = document.getElementById('expenseName').value.trim();
             const amount = parseFloat(document.getElementById('expenseAmount').value);
             const currency = document.getElementById('expenseCurrency').value;
@@ -728,16 +891,16 @@
             }
             
             expenses[monthKey].push(expense);
-            saveData();
+            await saveData();
             updateDisplay();
             hideForm();
         }
 
-        function deleteExpense(expenseId) {
+        async function deleteExpense(expenseId) {
             const monthKey = getCurrentMonthKey();
             if (expenses[monthKey]) {
                 expenses[monthKey] = expenses[monthKey].filter(exp => exp.id !== expenseId);
-                saveData();
+                await saveData();
                 updateDisplay();
             }
         }
@@ -864,6 +1027,57 @@
                 balanceElement.classList.add('zero');
             }
         }
+
+        // Network status detection
+        window.addEventListener('online', () => {
+            isOnline = true;
+            if (window.firebaseDb) {
+                syncToFirebase();
+            }
+        });
+
+        window.addEventListener('offline', () => {
+            isOnline = false;
+            showSyncStatus('error');
+        });
+
+        // Real-time sync listener (optional - aktiveras när Firebase är redo)
+        function setupRealtimeSync() {
+            if (!window.firebaseDb) return;
+            
+            // Listen to expenses changes
+            const expensesRef = window.firebaseDoc(window.firebaseDb, 'balanceData', 'expenses');
+            window.firebaseOnSnapshot(expensesRef, (doc) => {
+                if (doc.exists()) {
+                    const firebaseData = doc.data().data;
+                    if (firebaseData && JSON.stringify(firebaseData) !== JSON.stringify(expenses)) {
+                        expenses = firebaseData;
+                        updateDisplay();
+                        showSyncStatus('synced');
+                    }
+                }
+            });
+            
+            // Listen to settings changes
+            const settingsRef = window.firebaseDoc(window.firebaseDb, 'balanceData', 'settings');
+            window.firebaseOnSnapshot(settingsRef, (doc) => {
+                if (doc.exists()) {
+                    const rate = doc.data().exchangeRate;
+                    if (rate && rate !== exchangeRate) {
+                        exchangeRate = rate;
+                        updateDisplay();
+                        showSyncStatus('synced');
+                    }
+                }
+            });
+        }
+
+        // Setup real-time sync after 2 seconds (to let Firebase initialize)
+        setTimeout(() => {
+            if (window.firebaseDb) {
+                setupRealtimeSync();
+            }
+        }, 2000);
     </script>
 </body>
 </html>
