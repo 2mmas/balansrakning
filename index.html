@@ -31,12 +31,17 @@
         .person-section.thomas { border-color: #2196f3; background: linear-gradient(135deg,#e3f2fd 0%,#bbdefb 100%); }
         .person-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #333; }
         .expense-list { min-height: 200px; }
-        .expense-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border-radius: 10px; margin-bottom: 8px; box-shadow: 0 2px 5px rgba(0,0,0,.1); transition: all .3s ease; }
+        .expense-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px; background: white; border-radius: 10px; margin-bottom: 8px; box-shadow: 0 2px 5px rgba(0,0,0,.1); transition: all .3s ease; }
         .expense-item:hover { transform: translateX(5px); box-shadow: 0 4px 10px rgba(0,0,0,.15); }
         .expense-item.private { background: linear-gradient(45deg,#fff3e0,#ffe0b2); border-left: 3px solid #ff9800; }
-        .expense-info { flex: 1; }
+        .expense-badges { display:flex; gap:6px; align-items:center; }
+        .badge { background:#efefef; border:1px solid #ddd; padding:2px 8px; border-radius:999px; font-size:12px; white-space:nowrap; }
+        .badge.shared { background:#e8f5e9; border-color:#c8e6c9; }
+        .badge.private { background:#ffecb3; border-color:#ffe082; }
+        .expense-info { flex: 1; min-width:0; }
         .expense-name { font-weight: bold; color: #333; }
         .expense-amount { color: #666; font-size: 14px; }
+        .expense-date { color:#777; font-size:12px; }
         .private-indicator { background: #ff9800; color: white; padding: 4px 8px; border-radius: 15px; font-size: 12px; margin-right: 10px; }
         .delete-btn { background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 50%; cursor: pointer; font-size: 12px; transition: all .3s ease; }
         .delete-btn:hover { background: #d32f2f; transform: scale(1.1); }
@@ -131,6 +136,15 @@
                         </select>
                     </div>
                 </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                    <div>
+                        <label>Datum</label>
+                        <input type="date" id="expenseDate" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:5px;" />
+                    </div>
+                    <div style="display:flex; align-items:end; gap:10px;">
+                        <span class="badge shared">🤝 Gemensamt delas 50/50</span>
+                    </div>
+                </div>
                 <div style="display:flex; gap:10px; justify-content:flex-end;">
                     <button type="button" onclick="hideForm()" style="padding:10px 20px; background:#e0e0e0; border:none; border-radius:5px; cursor:pointer;">Avbryt</button>
                     <button type="button" onclick="addExpense()" style="padding:10px 20px; background:#4CAF50; color:white; border:none; border-radius:5px; cursor:pointer;">Lägg till</button>
@@ -161,10 +175,10 @@
             <div class="summary-layout">
                 <div class="person-totals moa">
                     <h3>👩‍🦰 Moa</h3>
-                    <div class="totals-line shared"><span><strong>Total i Euro:</strong></span><span><strong id="moaTotalEUR">0 EUR</strong></span></div>
-                    <div class="totals-line shared"><span><strong>Total i SEK:</strong></span><span><strong id="moaTotalSEKShared">0 SEK</strong></span></div>
-                    <div class="totals-line total"><span><strong>Total summa:</strong></span><span><strong id="moaTotalSEK">0 SEK</strong></span></div>
-                    <div class="totals-line total"><span><strong></strong></span><span><strong id="moaTotalEURTotal">0 EUR</strong></span></div>
+                    <div class="totals-line shared"><span><strong>Delade utgifter i EUR:</strong></span><span><strong id="moaTotalEUR">0 EUR</strong></span></div>
+                    <div class="totals-line shared"><span><strong>Delade utgifter i SEK:</strong></span><span><strong id="moaTotalSEKShared">0 SEK</strong></span></div>
+                    <div class="totals-line total"><span><strong>Delat (SEK, omräknat):</strong></span><span><strong id="moaTotalSEK">0 SEK</strong></span></div>
+                    <div class="totals-line total"><span><strong>Delat (EUR):</strong></span><span><strong id="moaTotalEURTotal">0 EUR</strong></span></div>
                     <div style="margin-top:20px; padding-top:15px; border-top:1px solid #ddd;">
                         <h4 style="margin-bottom:10px; font-size:14px; color:#666;">Privata utgifter:</h4>
                         <div class="totals-line"><span>Euro:</span><span id="moaPrivateEUR">0</span></div>
@@ -179,10 +193,10 @@
 
                 <div class="person-totals thomas">
                     <h3>👨‍💼 Thomas</h3>
-                    <div class="totals-line shared"><span><strong>Total i Euro:</strong></span><span><strong id="thomasTotalEUR">0 EUR</strong></span></div>
-                    <div class="totals-line shared"><span><strong>Total i SEK:</strong></span><span><strong id="thomasTotalSEKShared">0 SEK</strong></span></div>
-                    <div class="totals-line total"><span><strong>Total summa:</strong></span><span><strong id="thomasTotalSEK">0 SEK</strong></span></div>
-                    <div class="totals-line total"><span><strong></strong></span><span><strong id="thomasTotalEURTotal">0 EUR</strong></span></div>
+                    <div class="totals-line shared"><span><strong>Delade utgifter i EUR:</strong></span><span><strong id="thomasTotalEUR">0 EUR</strong></span></div>
+                    <div class="totals-line shared"><span><strong>Delade utgifter i SEK:</strong></span><span><strong id="thomasTotalSEKShared">0 SEK</strong></span></div>
+                    <div class="totals-line total"><span><strong>Delat (SEK, omräknat):</strong></span><span><strong id="thomasTotalSEK">0 SEK</strong></span></div>
+                    <div class="totals-line total"><span><strong>Delat (EUR):</strong></span><span><strong id="thomasTotalEURTotal">0 EUR</strong></span></div>
                     <div style="margin-top:20px; padding-top:15px; border-top:1px solid #ddd;">
                         <h4 style="margin-bottom:10px; font-size:14px; color:#666;">Privata utgifter:</h4>
                         <div class="totals-line"><span>Euro:</span><span id="thomasPrivateEUR">0</span></div>
@@ -214,7 +228,7 @@
                     apiKey: "AIzaSyDVS63u7KNOPweEwUgIFBRv8iREIA6p068",
                     authDomain: "balansrakning-35d46.firebaseapp.com",
                     projectId: "balansrakning-35d46",
-                    storageBucket: "balansrakning-35d46.appspot.com", // FIXAT
+                    storageBucket: "balansrakning-35d46.appspot.com",
                     messagingSenderId: "517144001949",
                     appId: "1:517144001949:web:c914d88eadc770403c4374"
                 };
@@ -348,6 +362,15 @@
 
         function toggleForm() {
             const form = document.getElementById('addExpenseForm');
+            // Förifyll dagens datum i datumfältet
+            const dateInput = document.getElementById('expenseDate');
+            if (dateInput && !dateInput.value) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth()+1).padStart(2,'0');
+                const dd = String(today.getDate()).padStart(2,'0');
+                dateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
         }
         function hideForm() { document.getElementById('addExpenseForm').style.display = 'none'; clearForm(); }
@@ -357,6 +380,7 @@
             document.getElementById('expenseCurrency').value = 'SEK';
             document.getElementById('expensePerson').value = '';
             document.getElementById('expenseType').value = '';
+            document.getElementById('expenseDate').value = '';
         }
 
         async function updateRate() {
@@ -377,9 +401,14 @@
             const currency = document.getElementById('expenseCurrency').value;
             const person = document.getElementById('expensePerson').value;
             const type = document.getElementById('expenseType').value;
+            const dateStr = document.getElementById('expenseDate').value; // YYYY-MM-DD
+
             if (!name || !amount || !currency || !person || !type) { alert('Vänligen fyll i alla fält!'); return; }
             if (amount <= 0) { alert('Beloppet måste vara större än 0!'); return; }
-            const expense = { id: Date.now(), name, amount, currency, person, type, date: new Date().toISOString() };
+
+            const dateISO = dateStr ? new Date(dateStr + 'T12:00:00').toISOString() : new Date().toISOString();
+
+            const expense = { id: Date.now(), name, amount, currency, person, type, date: dateISO };
             const monthKey = getCurrentMonthKey();
             if (!expenses[monthKey]) expenses[monthKey] = [];
             expenses[monthKey].push(expense);
@@ -399,6 +428,16 @@
 
         function convertToSEK(amount, currency) { return currency === 'EUR' ? amount * exchangeRate : amount; }
 
+        function formatDate(dateISO) {
+            try {
+                const d = new Date(dateISO);
+                const dd = String(d.getDate()).padStart(2,'0');
+                const mm = String(d.getMonth()+1).padStart(2,'0');
+                const yyyy = d.getFullYear();
+                return `${dd}/${mm}/${yyyy}`;
+            } catch { return ''; }
+        }
+
         function updateExpenseLists() {
             const monthKey = getCurrentMonthKey();
             const monthExpenses = expenses[monthKey] || [];
@@ -416,13 +455,16 @@
         function createExpenseElement(expense) {
             const div = document.createElement('div');
             div.className = `expense-item ${expense.type === 'private' ? 'private' : ''}`;
+            const sharedBadge = expense.type === 'shared' ? '<span class="badge shared">🤝 Gemensam</span>' : '';
+            const privateBadge = expense.type === 'private' ? '<span class="badge private">🏠 Privat</span>' : '';
             div.innerHTML = `
                 <div class="expense-info">
                     <div class="expense-name">${expense.name}</div>
                     <div class="expense-amount">${expense.amount.toFixed(2)} ${expense.currency}</div>
+                    <div class="expense-date">${formatDate(expense.date)}</div>
                 </div>
-                ${expense.type === 'private' ? '<div class="private-indicator">🏠 Privat</div>' : ''}
-                <button class="delete-btn" onclick="deleteExpense(${expense.id})">×</button>
+                <div class="expense-badges">${sharedBadge}${privateBadge}</div>
+                <button class="delete-btn" title="Ta bort" onclick="deleteExpense(${expense.id})">×</button>
             `;
             return div;
         }
@@ -430,8 +472,10 @@
         function updateSummary() {
             const monthKey = getCurrentMonthKey();
             const monthExpenses = expenses[monthKey] || [];
+
             let moaSharedEUR = 0, moaSharedSEK = 0, moaPrivateEUR = 0, moaPrivateSEK = 0;
             let thomasSharedEUR = 0, thomasSharedSEK = 0, thomasPrivateEUR = 0, thomasPrivateSEK = 0;
+
             monthExpenses.forEach(expense => {
                 const isEUR = expense.currency === 'EUR';
                 const isMoa = expense.person === 'moa';
@@ -441,36 +485,53 @@
                 else if (!isMoa && isShared) { if (isEUR) thomasSharedEUR += expense.amount; else thomasSharedSEK += expense.amount; }
                 else if (!isMoa && !isShared) { if (isEUR) thomasPrivateEUR += expense.amount; else thomasPrivateSEK += expense.amount; }
             });
+
+            // Visa privata totals
             document.getElementById('moaPrivateEUR').textContent = moaPrivateEUR.toFixed(2);
             document.getElementById('moaPrivateSEK').textContent = moaPrivateSEK.toFixed(2);
             document.getElementById('thomasPrivateEUR').textContent = thomasPrivateEUR.toFixed(2);
             document.getElementById('thomasPrivateSEK').textContent = thomasPrivateSEK.toFixed(2);
+
+            // Visa delade totals per person (som input, ej halverat)
             document.getElementById('moaTotalEUR').textContent = moaSharedEUR.toFixed(2) + ' EUR';
             document.getElementById('moaTotalSEKShared').textContent = moaSharedSEK.toFixed(2) + ' SEK';
             document.getElementById('thomasTotalEUR').textContent = thomasSharedEUR.toFixed(2) + ' EUR';
             document.getElementById('thomasTotalSEKShared').textContent = thomasSharedSEK.toFixed(2) + ' SEK';
-            const moaGrandTotal = convertToSEK(moaSharedEUR, 'EUR') + moaSharedSEK;
-            const thomasGrandTotal = convertToSEK(thomasSharedEUR, 'EUR') + thomasSharedSEK;
-            document.getElementById('moaTotalSEK').textContent = moaGrandTotal.toFixed(2) + ' SEK';
-            document.getElementById('thomasTotalSEK').textContent = thomasGrandTotal.toFixed(2) + ' SEK';
-            const moaGrandTotalEUR = moaGrandTotal / exchangeRate;
-            const thomasGrandTotalEUR = thomasGrandTotal / exchangeRate;
-            document.getElementById('moaTotalEURTotal').textContent = moaGrandTotalEUR.toFixed(2) + ' EUR';
-            document.getElementById('thomasTotalEURTotal').textContent = thomasGrandTotalEUR.toFixed(2) + ' EUR';
-            const balance = moaGrandTotal - thomasGrandTotal;
+
+            // Omräkna respektives delade utgifter till SEK
+            const moaSharedSEKTotal = convertToSEK(moaSharedEUR, 'EUR') + moaSharedSEK;
+            const thomasSharedSEKTotal = convertToSEK(thomasSharedEUR, 'EUR') + thomasSharedSEK;
+
+            // Visa deras (omräknade) delade totals i SEK/EUR
+            document.getElementById('moaTotalSEK').textContent = moaSharedSEKTotal.toFixed(2) + ' SEK';
+            document.getElementById('thomasTotalSEK').textContent = thomasSharedSEKTotal.toFixed(2) + ' SEK';
+            document.getElementById('moaTotalEURTotal').textContent = (moaSharedSEKTotal / exchangeRate).toFixed(2) + ' EUR';
+            document.getElementById('thomasTotalEURTotal').textContent = (thomasSharedSEKTotal / exchangeRate).toFixed(2) + ' EUR';
+
+            // --- BALANSBERÄKNING 50/50 ---
+            const totalSharedSEK = moaSharedSEKTotal + thomasSharedSEKTotal; // alla gemensamma utgifter
+            const eachOwesSEK = totalSharedSEK / 2; // var och en ska stå för hälften
+
+            // Om Moa har betalat mer än hälften, är Thomas skyldig Moa mellanskillnaden – och vice versa
+            const moaDiff = moaSharedSEKTotal - eachOwesSEK; // positivt => Thomas är skyldig Moa
+            const thomasDiff = thomasSharedSEKTotal - eachOwesSEK; // positivt => Moa är skyldig Thomas
+
             const balanceElement = document.getElementById('balanceResult');
             balanceElement.className = 'balance-result';
-            if (balance > 0) {
-                const balanceEUR = (Math.abs(balance) / exchangeRate).toFixed(2);
-                balanceElement.innerHTML = `<div class="main-text">Thomas är skyldig Moa</div><div class="amount-sek">${Math.abs(balance).toFixed(2)} SEK</div><div class="amount-eur">${balanceEUR} EUR</div>`;
-                balanceElement.classList.add('negative');
-            } else if (balance < 0) {
-                const balanceEUR = (Math.abs(balance) / exchangeRate).toFixed(2);
-                balanceElement.innerHTML = `<div class="main-text">Moa är skyldig Thomas</div><div class="amount-sek">${Math.abs(balance).toFixed(2)} SEK</div><div class="amount-eur">${balanceEUR} EUR</div>`;
-                balanceElement.classList.add('negative');
-            } else {
+
+            if (Math.abs(moaDiff) < 0.005) {
                 balanceElement.innerHTML = '<div class="main-text">Ni är kvitt! 🎉</div>';
                 balanceElement.classList.add('zero');
+            } else if (moaDiff > 0) {
+                const sek = moaDiff;
+                const eur = (sek / exchangeRate);
+                balanceElement.innerHTML = `<div class="main-text">Thomas är skyldig Moa</div><div class="amount-sek">${sek.toFixed(2)} SEK</div><div class="amount-eur">${eur.toFixed(2)} EUR</div>`;
+                balanceElement.classList.add('negative');
+            } else {
+                const sek = -moaDiff; // Moa måste betala Thomas
+                const eur = (sek / exchangeRate);
+                balanceElement.innerHTML = `<div class="main-text">Moa är skyldig Thomas</div><div class="amount-sek">${sek.toFixed(2)} SEK</div><div class="amount-eur">${eur.toFixed(2)} EUR</div>`;
+                balanceElement.classList.add('negative');
             }
         }
 
